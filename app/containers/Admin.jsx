@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 
 import fetchWP from '../utils/fetchWP';
 
+import Notice from '../components/notice';
+
 export default class Admin extends Component {
   constructor(props) {
     super(props);
@@ -10,7 +12,8 @@ export default class Admin extends Component {
     // Set the default states
     this.state = {
       email: '',
-      savedEmail: ''
+      savedEmail: '',
+      notice: false,
     };
 
     this.fetchWP = new fetchWP({
@@ -26,7 +29,7 @@ export default class Admin extends Component {
     this.fetchWP.get( 'admin' )
     .then(
       (json) => this.setState({
-        email: json.value, 
+        email: json.value,
         savedEmail: json.value
       }),
       (err) => console.log( 'error', err )
@@ -49,14 +52,23 @@ export default class Admin extends Component {
     );
   }
 
-  processOkResponse = (json, action) => {
+  processOkResponse = (json, method) => {
     if (json.success) {
       this.setState({
         email: json.value,
         savedEmail: json.value,
+        notice: {
+          type: 'success',
+          message: `Setting ${method} successfully.`,
+        }
       });
     } else {
-      console.log(`Setting was not ${action}.`, json);
+      this.setState({
+        notice: {
+          type: 'error',
+          message: `Setting was not ${method}.`,
+        }
+      });
     }
   }
 
@@ -69,7 +81,12 @@ export default class Admin extends Component {
   handleSave = (event) => {
     event.preventDefault();
     if ( this.state.email === this.state.savedEmail ) {
-      console.log('Setting unchanged');
+      this.setState({
+        notice: {
+          type: 'warning',
+          message: 'Setting unchanged.',
+        }
+      });
     } else {
       this.updateSetting();
     }
@@ -80,10 +97,22 @@ export default class Admin extends Component {
     this.deleteSetting();
   }
 
+  clearNotice = () => {
+    this.setState({
+      notice: false,
+    });
+  }
+
   render() {
-    // Here we update the contents of the h1, and the label, type and value of the input.
+    let notice;
+
+    if ( this.state.notice ) {
+      notice = <Notice notice={this.state.notice} onDismissClick={this.clearNotice} />
+    }
+
     return (
       <div className="wrap">
+        {notice}
         <form>
           <h1>Contact Form Settings</h1>
           
